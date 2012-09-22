@@ -8,6 +8,7 @@ import re
 pref_url = "http://365psd.com/day/"
 directory = os.path.dirname(os.path.abspath(__file__)) + "/"
 psd_directory = directory + "psd/"
+progress_file = directory + ".resume"
 
 max_day = 364
 cur_day = max_day
@@ -21,6 +22,33 @@ def create_dir(dir):
 create_dir(directory)
 create_dir(psd_directory)
 os.chdir(directory)
+	
+def get_progress():
+	global cur_day, max_year, cur_year
+	try:
+		with open(progress_file) as f:
+			progress_data = f.read().split("-")
+			cur_day = int(progress_data[0])
+			max_year = int(progress_data[1])
+			cur_year = max_year
+			return True
+	except:
+		pass
+
+	page = BeautifulSoup(get_webpage("http://365psd.com/"))
+	link_with_year = page.find("a", href=re.compile("^http\:\/\/365psd\.com\/day\/([0-9])\-"))
+	cur_day = int(page.find("div", id="breadcrumbs").findAll("strong")[1].contents[0])
+	max_year = int(link_with_year['href'][len(pref_url):].split('-')[0])
+	cur_year =  max_year
+
+def save_progress():
+	try:
+		f = open(progress_file, 'w')
+		f.write(str(cur_day) + "-" + str(cur_year))
+		f.close()
+		return True
+	except IOError as e:
+		return False
 
 def change_ext(filename, ext):
 	return (filename[0:-3] + ext)
@@ -57,11 +85,7 @@ def get_webpage(url):
 	return html
 
 try:
-	page = BeautifulSoup(get_webpage("http://365psd.com/"))		
-	link_with_year = page.find("a", href=re.compile("^http\:\/\/365psd\.com\/day\/([0-9])\-"))
-	cur_day = int(page.find("div", id="breadcrumbs").findAll("strong")[1].contents[0])
-	max_year = int(link_with_year['href'][len(pref_url):].split('-')[0])
-	cur_year =  max_year
+	get_progress()
 except:
 	print "Failed retrieving current day"
 
@@ -91,3 +115,4 @@ while(cur_year > 0):
 	if (cur_day == 0):
 		cur_day = max_day
 		cur_year = cur_year - 1
+	save_progress()
