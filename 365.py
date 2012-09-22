@@ -35,7 +35,7 @@ def extract_psd(filename):
 	for member in zipf.namelist():
 		is_psd = member.endswith('.psd')
 		file_size = zipf.getinfo(member).file_size
-		if is_psd and ('size' not in psd_file) or (psd_file['size'] > file_size):
+		if is_psd and ('size' not in psd_file) or (psd_file['size'] < file_size):
 			psd_file["size"] = file_size
 			psd_file["name"] = member
 
