@@ -100,7 +100,7 @@ while(cur_year > 0):
 	download_page = BeautifulSoup(get_webpage(link))
 	download_link = download_page.find("div", id="item").find("a", attrs={ "class": "download" })['href']
 	download_title = download_page.find("h1").text
-	download_filename = download_title.replace(" ", "_") + ".zip"
+	download_filename = re.sub("\/|\s+", "_", re.sub("\&[^\;]+\;", "", download_title)) + ".zip"
 
 	print "Downloading %s" % download_title
 	download_psd(download_link, download_filename)
