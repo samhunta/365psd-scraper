@@ -35,10 +35,9 @@ def extract_psd(filename):
 		if not m_filename.lower().endswith('.psd'):
 			continue
 
-		m_source = zipf.open(member)
-		m_target = file(os.path.join(psd_directory, change_ext(filename, "psd")), 'wb')
-		shutil.copyfileobj(m_source, m_target)
-		m_source.close()
+		m_source = zipf.read(member)
+		m_target = open(os.path.join(psd_directory, change_ext(filename, "psd")), 'wb')
+		m_target.write(m_source)
 		m_target.close()
 	zipf.close()
 	os.unlink(os.path.join(psd_directory, filename))
