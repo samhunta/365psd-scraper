@@ -22,25 +22,33 @@ create_dir(directory)
 create_dir(psd_directory)
 os.chdir(directory)
 
-def download_psd(url, filename):
-	urllib.urlretrieve(url, os.path.join(psd_directory, filename))
-
 def change_ext(filename, ext):
 	return (filename[0:-3] + ext)
 
+def download_psd(url, filename):
+	urllib.urlretrieve(url, os.path.join(psd_directory, filename))
+
 def extract_psd(filename):
 	zipf = ZipFile(os.path.join(psd_directory, filename), 'r')
-	for member in zipf.namelist():
-		m_filename = os.path.basename(member)
-		if not m_filename.lower().endswith('.psd'):
-			continue
+	psd_file = {}
 
-		m_source = zipf.read(member)
-		m_target = open(os.path.join(psd_directory, change_ext(filename, "psd")), 'wb')
-		m_target.write(m_source)
-		m_target.close()
-	zipf.close()
+	for member in zipf.namelist():
+		is_psd = member.endswith('.psd')
+		file_size = zipf.getinfo(member).file_size
+		if is_psd and ('size' not in psd_file) or (psd_file['size'] > file_size):
+			psd_file["size"] = file_size
+			psd_file["name"] = member
+
+	if not psd_file:
+		return False
+
+	m_source = zipf.open(psd_file['name'])
+	m_target = file(os.path.join(psd_directory, change_ext(filename, 'psd')), 'wb')
 	os.unlink(os.path.join(psd_directory, filename))
+	shutil.copyfileobj(m_source, m_target)
+	m_source.close()
+	m_target.close()
+	zipf.close()
 
 def get_webpage(url):
 	result = urllib.urlopen(url)
@@ -63,21 +71,22 @@ while(cur_year > 0):
 		link += str(cur_year) + "-"
 	link += str(cur_day)
 
-	try:
-		download_page = BeautifulSoup(get_webpage(link))
-		download_link = download_page.find("div", id="item").find("a", attrs={ "class": "download" })['href']
-		download_title = download_page.find("h1").text
-		download_filename = re.sub("\s+?\&[^\;]+\;\s+?|\s+", "_", download_title) + ".zip"
+	# try:
+	download_page = BeautifulSoup(get_webpage(link))
+	download_link = download_page.find("div", id="item").find("a", attrs={ "class": "download" })['href']
+	download_title = download_page.find("h1").text
+	download_filename = download_title.replace(" ", "_") + ".zip"
 
-		print "Downloading %s" % download_title
-		download_psd(download_link, download_filename)
-	
-		print "Extracting %s" % download_filename
-		extract_psd(download_filename)
+	print "Downloading %s" % download_title
+	download_psd(download_link, download_filename)
 
-		print " "
-	except:
-		print "Error while downloading PSD from", link
+	print "Extracting %s" % download_filename
+	extract_psd(download_filename)
+
+	print " "
+
+	# except:
+	# 	print "Error while downloading PSD from", link
 
 	cur_day = cur_day - 1
 	if (cur_day == 0):
