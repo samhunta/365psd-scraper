@@ -25,20 +25,23 @@ os.chdir(directory)
 def download_psd(url, filename):
 	urllib.urlretrieve(url, os.path.join(psd_directory, filename))
 
+def change_ext(filename, ext):
+	return (filename[0:-3] + ext)
+
 def extract_psd(filename):
 	zipf = ZipFile(os.path.join(psd_directory, filename), 'r')
 	for member in zipf.namelist():
 		m_filename = os.path.basename(member)
-		if not m_filename.endswith('.psd'):
+		if not m_filename.lower().endswith('.psd'):
 			continue
 
 		m_source = zipf.open(member)
-		m_target = file(os.path.join(psd_directory, filename[0:-4]+'.psd'), 'wb')
-		os.unlink(os.path.join(psd_directory, filename))
+		m_target = file(os.path.join(psd_directory, change_ext(filename, "psd")), 'wb')
 		shutil.copyfileobj(m_source, m_target)
 		m_source.close()
 		m_target.close()
 	zipf.close()
+	os.unlink(os.path.join(psd_directory, filename))
 
 def get_webpage(url):
 	result = urllib.urlopen(url)
@@ -61,22 +64,21 @@ while(cur_year > 0):
 		link += str(cur_year) + "-"
 	link += str(cur_day)
 
-	# try:
-	download_page = BeautifulSoup(get_webpage(link))
-	download_link = download_page.find("div", id="item").find("a", attrs={ "class": "download" })['href']
-	download_title = download_page.find("h1").text
-	download_filename = download_title.replace(" ", "_") + ".zip"
+	try:
+		download_page = BeautifulSoup(get_webpage(link))
+		download_link = download_page.find("div", id="item").find("a", attrs={ "class": "download" })['href']
+		download_title = download_page.find("h1").text
+		download_filename = re.sub("\s+?\&[^\;]+\;\s+?|\s+", "_", download_title) + ".zip"
 
-	print "Downloading %s" % download_title
-	download_psd(download_link, download_filename)
+		print "Downloading %s" % download_title
+		download_psd(download_link, download_filename)
+	
+		print "Extracting %s" % download_filename
+		extract_psd(download_filename)
 
-	print "Extracting %s" % download_filename
-	extract_psd(download_filename)
-
-	print " "
-
-	# except:
-	# 	print "Error while downloading PSD from", link
+		print " "
+	except:
+		print "Error while downloading PSD from", link
 
 	cur_day = cur_day - 1
 	if (cur_day == 0):
