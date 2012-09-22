@@ -71,22 +71,21 @@ while(cur_year > 0):
 		link += str(cur_year) + "-"
 	link += str(cur_day)
 
-	# try:
-	download_page = BeautifulSoup(get_webpage(link))
-	download_link = download_page.find("div", id="item").find("a", attrs={ "class": "download" })['href']
-	download_title = download_page.find("h1").text
-	download_filename = download_title.replace(" ", "_") + ".zip"
+	try:
+		download_page = BeautifulSoup(get_webpage(link))
+		download_link = download_page.find("div", id="item").find("a", attrs={ "class": "download" })['href']
+		download_title = download_page.find("h1").text
+		download_filename = download_title.replace(" ", "_") + ".zip"
 
-	print "Downloading %s" % download_title
-	download_psd(download_link, download_filename)
+		print "Downloading %s" % download_title
+		download_psd(download_link, download_filename)
 
-	print "Extracting %s" % download_filename
-	extract_psd(download_filename)
+		print "Extracting %s" % download_filename
+		extract_psd(download_filename)
 
-	print " "
-
-	# except:
-	# 	print "Error while downloading PSD from", link
+		print " "
+	except:
+		print "Error while downloading PSD from", link
 
 	cur_day = cur_day - 1
 	if (cur_day == 0):
